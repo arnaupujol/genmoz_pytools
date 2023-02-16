@@ -82,3 +82,43 @@ def import_genmoz_retrospective_data(data_path = "/home/isglobal.lan/apujol/isgl
     summary_meta['source'][summary_meta['study'] == 'XMAG18'] = 'X'
     summary_meta['source'][summary_meta['study'].isnull()] = 'UCSF'
     return summary_meta, all_meta, divmetrics, v4_amplicon, ucsf_data, ucsf_metadata, barcode2studyid
+
+def prepare_data4dcifer(v4_amplicon, summary_meta, save = False, \
+                        output_path = "/home/isglobal.lan/apujol/isglobal/projects/genmoz/notebooks/testing/data/", \
+                       diversity_name = "v4_call_diversity_retrospective_data.csv", \
+                       all_amplicons_name = "v4_call_retrospective_data.csv"):
+    """
+    This method generates data and files for the computation of IBD with Dcifer.
+
+    Parameters:
+    -----------
+    v4_amplicon: pd.DataFrame
+        Amplicon data of samples
+    summary_meta: pd.DataFrame
+        Metadata of samples
+    save: bool
+        It specifies if the output data is saved
+    output_path: str
+        Directory where output data is saved
+    diversity_name: str
+        Name of file with data with only microhaplotypes of diversity
+    all_amplicons_name: str
+        Name of file with data containing all the microhaplotypes
+
+    Return:
+    -------
+    data4dcifer: pd.DataFrame
+        Dataframe containing the data with all the microhaplotypes
+    data4dcifer_diversity: pd.DataFrame
+        Dataframe containing the data the microhaplotypes of diversity
+    """
+    #Preparing data for Dcifer
+    samples4dcifer = summary_meta[['Sample']].drop_duplicates()
+    data4dcifer = pd.merge(v4_amplicon, samples4dcifer, left_on = 's_Sample', right_on = 'Sample', how = 'inner')
+    diversity_amplicons = pd.Series([i for i in v4_amplicon['amplicon'].unique() if i[-2:] == '1A'])
+    diversity_amplicons = pd.DataFrame(diversity_amplicons, columns = ['amplicon'])
+    data4dcifer_diversity = pd.merge(data4dcifer, diversity_amplicons, on = 'amplicon', how = 'inner')
+    if save:
+        data4dcifer_diversity.to_csv(output_path + diversity_name)
+        data4dcifer.to_csv(output_path + all_amplicons_name)
+    return data4dcifer, data4dcifer_diversity
