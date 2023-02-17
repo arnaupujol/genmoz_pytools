@@ -122,3 +122,43 @@ def prepare_data4dcifer(v4_amplicon, summary_meta, save = False, \
         data4dcifer_diversity.to_csv(output_path + diversity_name)
         data4dcifer.to_csv(output_path + all_amplicons_name)
     return data4dcifer, data4dcifer_diversity
+
+def get_data_for_glm(ibd_values, dist_values, p_values, min_IBD, max_p, min_dist, max_dist):
+    """
+    This method filters the data of IBD, distances and p-values for the linear regression
+    analysis.
+
+    Parameters:
+    -----------
+    bd_values: np.array or pd.Series
+        Array of IBD values of the pairs.
+    dist_values: np.array or pd.Series
+        Array of the distance between the pairs.
+    p_values: np.array or pd.Series
+        Array of p-values of the IBD of the pairs.
+    min_IBD: float
+        Minimum IBD from which the fraction was calculated.
+    max_p: float
+        Maximum p-value from which the fraction was calculated.
+    min_dist: float
+        Minimum distance to include in the bins.
+    max_dist: float
+        Maximum distance to include in the bins.
+
+    Returns:
+    --------
+    dist_filt: np.array
+        Array of distances included.
+    ibd_high: np.array
+        Binary array defining the cases that passed the IBD and p-value thresholds.
+    """
+    if min_dist is None:
+        min_dist = np.min(dist_values)
+    if max_dist is None:
+        max_dist = np.max(dist_values)
+    ibd_high = (ibd_values >= min_IBD)&(p_values <= max_p)
+    ibd_high = np.array(ibd_high, dtype = int)
+    dist_mask = (dist_values >= min_dist)&(dist_values <= max_dist)
+    ibd_high = ibd_high[dist_mask]
+    dist_filt = dist_values[dist_mask]
+    return dist_filt, ibd_high
