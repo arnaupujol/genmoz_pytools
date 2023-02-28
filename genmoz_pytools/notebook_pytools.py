@@ -16,7 +16,7 @@ def import_genmoz_retrospective_data(data_path = "/home/isglobal.lan/apujol/isgl
                                     grc2_filename = 'Genotyping_results_May_2021_1234-PF-MZ-MAYOR.xlsx', \
                                     ucsf_data_filename = 'EpidemiologiaGenetic_DATA_2018-07-22_0025_V1.csv', \
                                     ucsf_metadata_filename = 'MozambiqueMicrosatellite_Metadata.csv', \
-                                    ucsf_barcode2studyid_filename = 'msbarcodeToStudyID.tab.txt', \
+                                    ucsf_barcode2studyid_filename = 'metadata_Arnau.csv', \
                                     index_filename = "index_nida.csv", contacts_filename = "contacts_nida.csv"):
     #It conains metadata of index and contact cases
     index = pd.read_csv(pregmal_data_path + index_filename)
@@ -63,14 +63,22 @@ def import_genmoz_retrospective_data(data_path = "/home/isglobal.lan/apujol/isgl
     ucsf_metadata['date5'] = pd.to_datetime(ucsf_metadata['date5'])
     ucsf_metadata['age'][ucsf_metadata['age'] == '7Chichango'] = '7'
     ucsf_metadata['age'] = np.array(ucsf_metadata['age'], dtype = float)
-    barcode2studyid = pd.read_csv(ucsf_data_path + ucsf_barcode2studyid_filename, delimiter = '\t')
+    barcode2studyid = pd.read_csv(ucsf_data_path + ucsf_barcode2studyid_filename)
 
     #Processing data
     #Region from Zambezia was wrongly assigned
     mask = (summary_meta['Province'] == 'Zambezia') | (summary_meta['Province2'] == 'Zambezia')
     summary_meta.loc[mask, 'Region2'] = 'Central'
 
-    #Adding metadata
+    #Adding metadata from UCSF samples
+    ucsf_data = pd.merge(ucsf_data, barcode2studyid[barcode2studyid['id'].notnull()], \
+                        left_on = 'studyid', right_on = 'id', how = 'left')
+    ucsf_columns = ['studyarea', 'date', 'clinic', 'age', \
+                 'genre', 'province0',  'neighborhood', \
+                 'didyouspendnight', 'numbenight', 'datearrival', \
+                 'destiny', 'district', 'administrativepost', \
+                 'locality', 's_Sample']
+
     summary_meta = pd.merge(summary_meta, all_meta[['Sample', 'WGS ENA accession', 'study', 'Date']].drop_duplicates(), on = 'Sample', how = 'left')
     summary_meta['sample_name_calls'] = pd.Series(summary_meta['Sample'])
     mask = summary_meta['WGS ENA accession'].notnull()
@@ -81,6 +89,14 @@ def import_genmoz_retrospective_data(data_path = "/home/isglobal.lan/apujol/isgl
     summary_meta['source'][summary_meta['study'] == 'XMAL15'] = 'X'
     summary_meta['source'][summary_meta['study'] == 'XMAG18'] = 'X'
     summary_meta['source'][summary_meta['study'].isnull()] = 'UCSF'
+
+    ucsf_data['s_Sample'] = pd.Series(np.array(np.array(ucsf_data['s_Sample'], \
+                                      dtype = int), dtype = str), dtype = object)
+    #Avoiding duplicate values of ucsf_data[Sample] == 8034211758
+    ucsf_data = ucsf_data.drop(177)
+    summary_meta = pd.merge(summary_meta, ucsf_data[ucsf_columns], \
+                            left_on = 'Sample', right_on = 's_Sample', \
+                            how = 'left')
     return summary_meta, all_meta, divmetrics, v4_amplicon, ucsf_data, ucsf_metadata, barcode2studyid
 
 def prepare_data4dcifer(v4_amplicon, summary_meta, save = False, \
@@ -162,3 +178,80 @@ def get_data_for_glm(ibd_values, dist_values, p_values, min_IBD, max_p, min_dist
     ibd_high = ibd_high[dist_mask]
     dist_filt = dist_values[dist_mask]
     return dist_filt, ibd_high
+
+def rename_all_xy(df):
+    list_columns = find_all_xy(df)
+    for name in list_columns:
+        df[name+'_x'][df[name+'_x'].isnull()] = df[name+'_y'][df[name+'_x'].isnull()]
+        df = df.rename(columns = {name+'_x':name})
+        del df[name+'_y']
+    return df
+
+def find_all_xy(df):
+    list_columns = []
+    for col in df:
+        if col[-2:] == '_x':
+            if col[:-2] + '_y' not in df.columns:
+                print("Warning: " + col[:-2] + '_y not found')
+            list_columns.append(col[:-2])
+    return list_columns
+
+list_locs = {
+    'Manhica' : [32.80722050, -25.40221980], #From Pau Cisteró excel
+    'Maputo' : [32.576388888888889, -25.915277666666],
+    'Montepuez' : [38.99972150, -13.12555980], #From Pau Cisteró excel
+    'Chokwe' : [33.005166666666666667, -24.5252777777777777],
+    'Moatize' : [33.73333040, -16.11666620], #From Pau Cisteró excel
+    'Dondo' : [34.75, -19.6166666666666667],
+    'Magude' : [32.64216410, -25.02049992], #From Pau Cisteró excel
+    'Ilha Josina' : [32.92210000, -25.09330000], #From Pau Cisteró excel
+    'Xinavane' : [32.791885, -25.048534],
+    'Panjane' : [32.352430, -24.899469],
+    'Motaze' : [32.860569, -24.810357],
+    'Mapulanguene' : [32.081602, -24.491015],
+    'Taninga' : [32.825796, -25.182094],
+    'Palmeira' : [32.869766, -25.261457],
+    'Massinga' : [35.37405260,-23.32666250], #From Pau Cisteró excel
+    'Mopeia' : [35.71338490, -17.97391000], #From Pau Cisteró excel
+    'Gaza' : [34.19153, -24.9206],#Chidenguele HF
+    'Inhambane' : [35.38, -23.33456],#Massinga
+    'Zambezia' : [35.71279, -17.97899],#Mopeia
+    'C.Delgado' : [38.99972150, -13.12555980],#Montepuez
+    'Cabo-Delgado' : [38.99972150, -13.12555980],#Montepuez
+    'Tete' : [33.618156, -16.138187],#Tete
+    'Sofala' : [34.846280, -19.833158],#Beira
+    }
+locations = pd.DataFrame({'location' : [i for i in list_locs], 'longitude': [list_locs[i][0] for i in list_locs], 'latitude': [list_locs[i][1] for i in list_locs]})
+locations = geopandas.GeoDataFrame(locations, geometry = geopandas.points_from_xy(locations['longitude'], locations['latitude']))
+locations = locations.set_crs(epsg=4326)
+
+ucsf_destiny2province = {
+                        1.0 : 'Maputo', \
+                        2.0 : 'Gaza', \
+                        3.0 : 'Inhambane', \
+                        4.0 : 'Sofala', \
+                        5.0 : 'Manica', \
+                        6.0 : 'Nampula', \
+                        7.0 : 'Cabo Delgado', \
+                        8.0 : 'Niassa', \
+                        9.0 : 'Another Country', \
+}
+
+react_destiny2location = {1.0 : 'Magude', \
+                        2.0 : 'Xinavane', \
+                        3.0 : 'Manhiça', \
+                        4.0 : 'Maputo City', \
+                        5.0 : 'Maputo Province', \
+                        6.0 : 'Gaza', \
+                        7.0 : 'Inhambane', \
+                        8.0 : 'Sofala', \
+                        9.0 : 'Manica', \
+                        10.0 : 'Zambezia', \
+                        11.0 : 'Tete', \
+                        12.0 : 'Nampula', \
+                        13.0 : 'Cabo Delgado', \
+                        14.0 : 'Niassa', \
+                        15.0 : 'South Africa', \
+                        16.0 : 'Eswatini', \
+                        17.0 : 'Another Country', \
+}
