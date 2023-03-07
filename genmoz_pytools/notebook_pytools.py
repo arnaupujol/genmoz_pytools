@@ -303,7 +303,7 @@ def get_overall_exp_He_vs_size(amplicon_data, labels, xlim = None, \
     plt.ylim(ylim)
     plt.show()
 
-def plot_He_per_cat(He_per_cat, He_per_cat_err):
+def plot_He_per_cat(He_per_cat, He_per_cat_err, colours = None):
     """
     This method plots the overall expected He per
     category.
@@ -316,14 +316,19 @@ def plot_He_per_cat(He_per_cat, He_per_cat_err):
     He_per_cat_err: pd.DataFrame
         Data frame with the values of overall expected
         He error for each category.
+    colours: list
+        List of colours for plotting each category.
 
     Returns:
     --------
     Error bar plot showing the statistics.
     """
+    categories = list(He_per_cat.keys())
+    if colours is None:
+        colours = [cm.turbo(i/len(categories)) for i in range(len(categories))]
     for i, cat in enumerate(He_per_cat):
         plt.errorbar(i, He_per_cat[cat], He_per_cat_err[cat], marker = 'o', color = colours[i])
-    plt.xticks(range(len(He_per_cat)), labels = list(He_per_cat.keys()))
+    plt.xticks(range(len(He_per_cat)), labels = categories)
     plt.ylabel('Mean expected He')
     plt.show()
 
