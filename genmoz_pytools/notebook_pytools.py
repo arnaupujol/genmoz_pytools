@@ -3,7 +3,7 @@ import numpy as np
 import geopandas
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from genomic_tools.microhaplotypes import He_from_samples
+from genomic_tools.microhaplotypes import He_from_samples, get_allele_frequencies
 
 def import_genmoz_retrospective_data(data_path = "/home/isglobal.lan/apujol/isglobal/projects/genmoz/data/retrospective/", \
                                     ucsf_data_path = "/home/isglobal.lan/apujol/isglobal/projects/genmoz/data/retrospective/ucsf/", \
@@ -334,7 +334,7 @@ def plot_He_per_cat(He_per_cat, He_per_cat_err, colours = None):
 
 def get_He_vs_cat(amplicon_data, label, categories = None, \
                   verbose = True, show = True, ymax = 4, \
-                 show_errorbar = True):
+                 show_errorbar = True, show_allele_freq = True):
     """
     This method calculates the expected He per locus and
     overall for different categories defined by a label.
@@ -356,6 +356,9 @@ def get_He_vs_cat(amplicon_data, label, categories = None, \
         Y axis upper limit to show in the plot.
     show_errorbar: bool
         If True, an errorbar of the overall exp He per
+        category is shown.
+    show_allele_freq: bool
+        If True, an the spectrum of allele frequencies per
         category is shown.
 
     Returns:
@@ -379,21 +382,41 @@ def get_He_vs_cat(amplicon_data, label, categories = None, \
         if verbose:
             print("Sample size " + str(cat) + ":" + \
                   str(len(amplicon_data[mask]['s_Sample'].unique())))
-        loci_He, overall_He = He_from_samples(amplicon_data[mask], locus_name = 'p_name', allele_name = 'h_popUID', \
-                           freq_name = 'c_AveragedFrac')
+        loci_He, overall_He = He_from_samples(amplicon_data[mask], locus_name = 'p_name', \
+                                              allele_name = 'h_popUID', \
+                                              freq_name = 'c_AveragedFrac')
         He_per_cat[cat] = overall_He
         He_per_cat_err[cat] = np.std(loci_He['He'])/np.sqrt(len(loci_He['He']))
         if show:
+            plt.figure(0)
             #Plotting He
             loci_He['He'].plot.density(bw_method = .1, color = colours[i], alpha = 1)
             plt.vlines(overall_He, 0, ymax, color = colours[i], lw = 2, linestyle = '--')
             plt.annotate(r"Overall H$_e$ in " + cat + " = " + str(round(overall_He,3)), \
                          xy = [overall_He +.01, ymax - i/ymax], color = colours[i])
+        if show_allele_freq:
+            allele_freq = get_allele_frequencies(amplicon_data[mask], locus_name = 'p_name', \
+                                                 allele_name = 'h_popUID', \
+                                                 freq_name = 'c_AveragedFrac')
+            plt.figure(1)
+            allele_freq['allele_freq'].plot.density(bw_method = .005, color = colours[i], \
+                                                    alpha = .5, label = cat)
     if show:
+        plt.figure(0)
         plt.ylabel('Probability density')
         plt.xlabel('Expected He')
         plt.xlim(0,1)
         plt.ylim(0, ymax)
+    if show_allele_freq:
+        plt.figure(1)
+        plt.ylabel('Number of alleles')
+        plt.xlabel('Allele frequencies')
+        plt.yscale('log')
+        plt.xlim(0,1)
+        plt.yscale('log')
+        plt.ylim(.01,100)
+        plt.legend()
+    if show or show_allele_freq:
         plt.show()
     if show_errorbar:
         plot_He_per_cat(He_per_cat, He_per_cat_err)
