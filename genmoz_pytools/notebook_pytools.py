@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 import geopandas
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from genomic_tools.microhaplotypes import He_from_samples
 
 def import_genmoz_retrospective_data(data_path = "/home/isglobal.lan/apujol/isglobal/projects/genmoz/data/retrospective/", \
                                     ucsf_data_path = "/home/isglobal.lan/apujol/isglobal/projects/genmoz/data/retrospective/ucsf/", \
@@ -255,3 +258,138 @@ react_destiny2location = {1.0 : 'Magude', \
                         16.0 : 'Eswatini', \
                         17.0 : 'Another Country', \
 }
+
+def get_overall_exp_He_vs_size(amplicon_data, labels, xlim = None, \
+                              ylim = None):
+    """
+    This method plots the relationship between overall
+    expected He and sample size from different sub-selections
+    of the samples.
+
+    Parameters:
+    -----------
+    amplicon_data: pd.DataFrame
+        Data frame containing the allele frequencies of samples
+        and the category label variable.
+    lables: list
+        List of labels to use to apply different selections.
+    xlim: list [float, float]
+        Limits of x-axis.
+    ylim: list [float, float]
+        Limits of y-axis.
+
+    Returns:
+    --------
+    Error bar plot with overall expected He versus sample size.
+    """
+    #Expected He vs sample size
+    for label in labels:
+        categories = amplicon_data[label][amplicon_data[label].notnull()].unique()
+        He_per_cat = {}
+        He_per_cat_err = {}
+        for cat in categories:
+            mask = amplicon_meta[label] == cat
+            size = len(amplicon_data[mask]['s_Sample'].unique())
+            loci_He, overall_He = He_from_samples(amplicon_data[mask], locus_name = 'p_name', \
+                                                  allele_name = 'h_popUID', \
+                                                  freq_name = 'c_AveragedFrac')
+            He_per_cat[cat] = overall_He
+            He_per_cat_err[cat] = np.std(loci_He['He'])/np.sqrt(len(loci_He['He']))
+            plt.errorbar(size, He_per_cat[cat], He_per_cat_err[cat], c = 'tab:blue', marker = 'o')
+    plt.grid()
+    plt.xlabel('Sample size')
+    plt.ylabel('Mean expected He')
+    plt.xlim(xlim)
+    plt.ylim(ylim)
+    plt.show()
+
+def plot_He_per_cat(He_per_cat, He_per_cat_err):
+    """
+    This method plots the overall expected He per
+    category.
+
+    Parameters:
+    -----------
+    He_per_cat: pd.DataFrame
+        Data frame with the values of overall expected
+        He for each category.
+    He_per_cat_err: pd.DataFrame
+        Data frame with the values of overall expected
+        He error for each category.
+
+    Returns:
+    --------
+    Error bar plot showing the statistics.
+    """
+    for i, cat in enumerate(He_per_cat):
+        plt.errorbar(i, He_per_cat[cat], He_per_cat_err[cat], marker = 'o', color = colours[i])
+    plt.xticks(range(len(He_per_cat)), labels = list(He_per_cat.keys()))
+    plt.ylabel('Mean expected He')
+    plt.show()
+
+def get_He_vs_cat(amplicon_data, label, categories = None, \
+                  verbose = True, show = True, ymax = 4, \
+                 show_errorbar = True):
+    """
+    This method calculates the expected He per locus and
+    overall for different categories defined by a label.
+
+    Parameters:
+    -----------
+    amplicon_data: pd.DataFrame
+        Data frame containing the allele frequencies of samples
+        and the category label variable.
+    label: str
+        Category name to which amplicon_data is selected.
+    categories: list
+        List of names from which the label is defined.
+    verbose: bool
+        If True, some informative text is printed.
+    show: bool
+        If True, the exp He distributions are plotted.
+    ymax: float
+        Y axis upper limit to show in the plot.
+    show_errorbar: bool
+        If True, an errorbar of the overall exp He per
+        category is shown.
+
+    Returns:
+    --------
+    He_per_cat: pd.DataFrame
+        Data frame with the values of overall expected
+        He for each category.
+    He_per_cat_err: pd.DataFrame
+        Data frame with the values of overall expected
+        He error for each category.
+    """
+    if categories is None:
+        categories = amplicon_meta[label][amplicon_meta[label].notnull()].unique()
+    colours = [cm.turbo(i/len(categories)) for i in range(len(categories))]
+
+    #Calculating exp He per category
+    He_per_cat = {}
+    He_per_cat_err = {}
+    for i, cat in enumerate(categories):
+        mask = amplicon_data[label] == cat
+        if verbose:
+            print("Sample size " + str(cat) + ":" + \
+                  str(len(amplicon_data[mask]['s_Sample'].unique())))
+        loci_He, overall_He = He_from_samples(amplicon_data[mask], locus_name = 'p_name', allele_name = 'h_popUID', \
+                           freq_name = 'c_AveragedFrac')
+        He_per_cat[cat] = overall_He
+        He_per_cat_err[cat] = np.std(loci_He['He'])/np.sqrt(len(loci_He['He']))
+        if show:
+            #Plotting He
+            loci_He['He'].plot.density(bw_method = .1, color = colours[i], alpha = 1)
+            plt.vlines(overall_He, 0, ymax, color = colours[i], lw = 2, linestyle = '--')
+            plt.annotate(r"Overall H$_e$ in " + cat + " = " + str(round(overall_He,3)), \
+                         xy = [overall_He +.01, ymax - i/ymax], color = colours[i])
+    if show:
+        plt.ylabel('Probability density')
+        plt.xlabel('Expected He')
+        plt.xlim(0,1)
+        plt.ylim(0, ymax)
+        plt.show()
+    if show_errorbar:
+        plot_He_per_cat(He_per_cat, He_per_cat_err)
+    return He_per_cat, He_per_cat_err
