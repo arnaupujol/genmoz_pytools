@@ -288,7 +288,7 @@ def get_overall_exp_He_vs_size(amplicon_data, labels, xlim = None, \
         He_per_cat = {}
         He_per_cat_err = {}
         for cat in categories:
-            mask = amplicon_meta[label] == cat
+            mask = amplicon_data[label] == cat
             size = len(amplicon_data[mask]['s_Sample'].unique())
             loci_He, overall_He = He_from_samples(amplicon_data[mask], locus_name = 'p_name', \
                                                   allele_name = 'h_popUID', \
@@ -368,7 +368,7 @@ def get_He_vs_cat(amplicon_data, label, categories = None, \
         He error for each category.
     """
     if categories is None:
-        categories = amplicon_meta[label][amplicon_meta[label].notnull()].unique()
+        categories = amplicon_data[label][amplicon_data[label].notnull()].unique()
     colours = [cm.turbo(i/len(categories)) for i in range(len(categories))]
 
     #Calculating exp He per category
