@@ -393,7 +393,7 @@ def get_He_vs_cat(amplicon_data, label, categories = None, \
             loci_He['He'].plot.density(bw_method = .1, color = colours[i], alpha = 1)
             plt.vlines(overall_He, 0, ymax, color = colours[i], lw = 2, linestyle = '--')
             plt.annotate(r"Overall H$_e$ in " + cat + " = " + str(round(overall_He,3)), \
-                         xy = [overall_He +.01, ymax - i/ymax], color = colours[i])
+                         xy = [overall_He +.01, .95*ymax - i/ymax], color = colours[i])
         if show_allele_freq:
             allele_freq = get_allele_frequencies(amplicon_data[mask], locus_name = 'p_name', \
                                                  allele_name = 'h_popUID', \
