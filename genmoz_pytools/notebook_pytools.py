@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from genomic_tools.microhaplotypes import He_from_samples, get_allele_frequencies
 
-def import_genmoz_retrospective_data(data_path = "/home/isglobal.lan/apujol/isglobal/projects/genmoz/data/retrospective/", \
-                                    ucsf_data_path = "/home/isglobal.lan/apujol/isglobal/projects/genmoz/data/retrospective/ucsf/", \
-                                    genmoz_data_path = "/home/isglobal.lan/apujol/isglobal/projects/genmoz/data/", \
-                                    pregmal_data_path = "/home/isglobal.lan/apujol/isglobal/projects/pregmal/data/", \
+def import_genmoz_retrospective_data(data_path = "/home/apujol/isglobal/projects/genmoz/data/retrospective/", \
+                                    ucsf_data_path = "/home/apujol/isglobal/projects/genmoz/data/retrospective/ucsf/", \
+                                    genmoz_data_path = "/home/apujol/isglobal/projects/genmoz/data/", \
+                                    pregmal_data_path = "/home/apujol/isglobal/projects/pregmal/data/", \
                                     summary_meta_filename = "ALL_2015_2018.lowsamples_50percent.metadata.txt", \
                                     all_meta_filename = "all_wt_grc_react_merged_clean.csv", \
                                     all_meta_txt_filename = "mod_all_wt_grc_merged_clean.txt", \
@@ -101,6 +101,32 @@ def import_genmoz_retrospective_data(data_path = "/home/isglobal.lan/apujol/isgl
                             left_on = 'Sample', right_on = 's_Sample', \
                             how = 'left')
     return summary_meta, all_meta, divmetrics, v4_amplicon, ucsf_data, ucsf_metadata, barcode2studyid
+
+def import_HFS22_data(data_path = "/home/apujol/isglobal/projects/genmoz/data/HFS/"):
+    """
+    This method loads the HFS 2022 GenMoz metadata and NextSeq data. 
+    
+    Parameters:
+    -----------
+    data_path: str
+        The directory where the data is stored. 
+    
+    Returns:
+    --------
+        hfs_metadata: pd.DataFrame
+            Metadata of the HFS collected data. 
+        hfs_run_data: pd.DataFrame
+            Data of the NextSeq results
+    """
+    hfs_excel_filename = data_path + 'HFS_ANO1.xlsx'
+    hfs_run_filename = data_path + 'HFS22_NextSeq_allele_data.csv'
+    
+    hfs_metadata = pd.read_excel(hfs_excel_filename)
+    hfs_run_data = pd.read_csv(hfs_run_filename)
+    hfs_metadata['date'] = pd.to_datetime(hfs_metadata['date'])
+    hfs_metadata['travel_date'] = pd.to_datetime(hfs_metadata['travel_date'])
+    hfs_metadata['interview_date'] = pd.to_datetime(hfs_metadata['interview_date'])
+    return hfs_metadata, hfs_run_data
 
 def prepare_data4dcifer(v4_amplicon, summary_meta, save = False, \
                         output_path = "/home/isglobal.lan/apujol/isglobal/projects/genmoz/notebooks/testing/data/", \
@@ -260,7 +286,9 @@ react_destiny2location = {1.0 : 'Magude', \
 }
 
 def get_overall_exp_He_vs_size(amplicon_data, labels, xlim = None, \
-                              ylim = None):
+                              ylim = None, locus_name = 'p_name', \
+                                allele_name = 'h_popUID', sample_name = 's_Sample', \
+                                freq_name = 'c_AveragedFrac'):
     """
     This method plots the relationship between overall
     expected He and sample size from different sub-selections
@@ -277,6 +305,14 @@ def get_overall_exp_He_vs_size(amplicon_data, labels, xlim = None, \
         Limits of x-axis.
     ylim: list [float, float]
         Limits of y-axis.
+    locus_name: str
+        Name of the column referring to the locus name. 
+    allele_name: str
+        Name of the column referring to the allele name. 
+    sample_name: str
+        Name of the column referring to the sample ID name. 
+    freq_name: str
+        Name of the column referring to the allele frequency name. 
 
     Returns:
     --------
@@ -289,10 +325,10 @@ def get_overall_exp_He_vs_size(amplicon_data, labels, xlim = None, \
         He_per_cat_err = {}
         for cat in categories:
             mask = amplicon_data[label] == cat
-            size = len(amplicon_data[mask]['s_Sample'].unique())
-            loci_He, overall_He = He_from_samples(amplicon_data[mask], locus_name = 'p_name', \
-                                                  allele_name = 'h_popUID', \
-                                                  freq_name = 'c_AveragedFrac')
+            size = len(amplicon_data[mask][sample_name].unique())
+            loci_He, overall_He = He_from_samples(amplicon_data[mask], locus_name = locus_name, \
+                                                  allele_name = allele_name, \
+                                                  freq_name = freq_name)
             He_per_cat[cat] = overall_He
             He_per_cat_err[cat] = np.std(loci_He['He'])/np.sqrt(len(loci_He['He']))
             plt.errorbar(size, He_per_cat[cat], He_per_cat_err[cat], c = 'tab:blue', marker = 'o')
@@ -334,7 +370,9 @@ def plot_He_per_cat(He_per_cat, He_per_cat_err, colours = None):
 
 def get_He_vs_cat(amplicon_data, label, categories = None, \
                   verbose = True, show = True, ymax = 4, \
-                 show_errorbar = True, show_allele_freq = True):
+                    show_errorbar = True, show_allele_freq = True, \
+                    locus_name = 'p_name', allele_name = 'h_popUID', \
+                    sample_name = 's_Sample', freq_name = 'c_AveragedFrac'):
     """
     This method calculates the expected He per locus and
     overall for different categories defined by a label.
@@ -360,6 +398,14 @@ def get_He_vs_cat(amplicon_data, label, categories = None, \
     show_allele_freq: bool
         If True, an the spectrum of allele frequencies per
         category is shown.
+    locus_name: str
+        Name of the column referring to the locus name. 
+    allele_name: str
+        Name of the column referring to the allele name. 
+    sample_name: str
+        Name of the column referring to the sample ID name. 
+    freq_name: str
+        Name of the column referring to the allele frequency name. 
 
     Returns:
     --------
@@ -373,7 +419,7 @@ def get_He_vs_cat(amplicon_data, label, categories = None, \
     if categories is None:
         categories = amplicon_data[label][amplicon_data[label].notnull()].unique()
     colours = [cm.turbo(i/len(categories)) for i in range(len(categories))]
-
+    
     #Calculating exp He per category
     He_per_cat = {}
     He_per_cat_err = {}
@@ -381,10 +427,10 @@ def get_He_vs_cat(amplicon_data, label, categories = None, \
         mask = amplicon_data[label] == cat
         if verbose:
             print("Sample size " + str(cat) + ":" + \
-                  str(len(amplicon_data[mask]['s_Sample'].unique())))
-        loci_He, overall_He = He_from_samples(amplicon_data[mask], locus_name = 'p_name', \
-                                              allele_name = 'h_popUID', \
-                                              freq_name = 'c_AveragedFrac')
+                  str(len(amplicon_data[mask][sample_name].unique())))
+        loci_He, overall_He = He_from_samples(amplicon_data[mask], locus_name = locus_name, \
+                                              allele_name = allele_name, \
+                                              freq_name = freq_name)
         He_per_cat[cat] = overall_He
         He_per_cat_err[cat] = np.std(loci_He['He'])/np.sqrt(len(loci_He['He']))
         if show:
@@ -395,9 +441,9 @@ def get_He_vs_cat(amplicon_data, label, categories = None, \
             plt.annotate(r"Overall H$_e$ in " + cat + " = " + str(round(overall_He,3)), \
                          xy = [overall_He +.01, .95*ymax - i/ymax], color = colours[i])
         if show_allele_freq:
-            allele_freq = get_allele_frequencies(amplicon_data[mask], locus_name = 'p_name', \
-                                                 allele_name = 'h_popUID', \
-                                                 freq_name = 'c_AveragedFrac')
+            allele_freq = get_allele_frequencies(amplicon_data[mask], locus_name = locus_name, \
+                                                 allele_name = allele_name, \
+                                                 freq_name = freq_name)
             plt.figure(1)
             allele_freq['allele_freq'].plot.density(bw_method = .005, color = colours[i], \
                                                     alpha = .5, label = cat)
