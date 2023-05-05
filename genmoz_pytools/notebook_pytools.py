@@ -102,7 +102,7 @@ def import_genmoz_retrospective_data(data_path = "/home/apujol/isglobal/projects
                             how = 'left')
     return summary_meta, all_meta, divmetrics, v4_amplicon, ucsf_data, ucsf_metadata, barcode2studyid
 
-def import_HFS22_data(data_path = "/home/apujol/isglobal/projects/genmoz/data/HFS/"):
+def import_HFS22_data(data_path = "/home/apujol/isglobal/projects/genmoz/data/HFS/", diversity_filtered = True):
     """
     This method loads the HFS 2022 GenMoz metadata and NextSeq data. 
     
@@ -110,6 +110,8 @@ def import_HFS22_data(data_path = "/home/apujol/isglobal/projects/genmoz/data/HF
     -----------
     data_path: str
         The directory where the data is stored. 
+    diversity_filtered: bool
+        If True, the data selected is the only restricted to diversity loci with applied covering and read filtering. 
     
     Returns:
     --------
@@ -119,7 +121,10 @@ def import_HFS22_data(data_path = "/home/apujol/isglobal/projects/genmoz/data/HF
             Data of the NextSeq results
     """
     hfs_excel_filename = data_path + 'HFS_ANO1.xlsx'
-    hfs_run_filename = data_path + 'HFS22_NextSeq_allele_data.csv'
+    if diversity_filtered:
+        hfs_run_filename = data_path + 'HFS22_NextSeq_allele_data_filtered_div.csv'
+    else: 
+        hfs_run_filename = data_path + 'HFS22_NextSeq_allele_data.csv'
     
     hfs_metadata = pd.read_excel(hfs_excel_filename)
     hfs_run_data = pd.read_csv(hfs_run_filename)
