@@ -127,6 +127,7 @@ def import_HFS22_data(data_path = "/home/apujol/isglobal/projects/genmoz/data/HF
         hfs_run_filename = data_path + 'HFS22_NextSeq_allele_data.csv'
     
     hfs_metadata = pd.read_excel(hfs_excel_filename)
+    hfs_metadata = rename_all_xy(hfs_metadata, suf_x = '.x', suf_y = '.y')
     hfs_run_data = pd.read_csv(hfs_run_filename)
     hfs_metadata['date'] = pd.to_datetime(hfs_metadata['date'])
     hfs_metadata['travel_date'] = pd.to_datetime(hfs_metadata['travel_date'])
@@ -213,20 +214,56 @@ def get_data_for_glm(ibd_values, dist_values, p_values, min_IBD, max_p, min_dist
     dist_filt = dist_values[dist_mask]
     return dist_filt, ibd_high
 
-def rename_all_xy(df):
-    list_columns = find_all_xy(df)
+def rename_all_xy(df, suf_x = '_x', suf_y = '_y'):
+    """
+    This method identifies the duplicated variables resulting from a merge and removes
+    the duplicates. 
+
+    Parameters:
+    -----------
+    df: pd.DataFrame
+        Dataframe to use.
+    suf_x: str
+        Suffix used to identify one duplication of the variables.
+    suf_y: str
+        Suffix used to identify the other duplication of the variables.
+    
+    Returns:
+    --------
+    df: pd.DataFrame
+        Dataframe with the dropped duplicates.
+    """
+    list_columns = find_all_xy(df, suf_x = suf_x, suf_y = suf_y)
     for name in list_columns:
-        df[name+'_x'][df[name+'_x'].isnull()] = df[name+'_y'][df[name+'_x'].isnull()]
-        df = df.rename(columns = {name+'_x':name})
-        del df[name+'_y']
+        df[name+suf_x][df[name+suf_x].isnull()] = df[name+suf_y][df[name+suf_x].isnull()]
+        df = df.rename(columns = {name+suf_x:name})
+        del df[name+suf_y]
     return df
 
-def find_all_xy(df):
+def find_all_xy(df, suf_x = '_x', suf_y = '_y'):
+    """
+    This method identifies the columns from a dataframe containing 
+    the suffixes suf_x and suf_y. 
+
+    Parameters:
+    -----------
+    df: pd.DataFrame
+        Dataframe to use.
+    suf_x: str
+        Suffix used to identify one duplication of the variables.
+    suf_y: str
+        Suffix used to identify the other duplication of the variables.
+    
+    Returns:
+    --------
+    list_columns: list
+        List of the identified columns.
+    """
     list_columns = []
     for col in df:
-        if col[-2:] == '_x':
-            if col[:-2] + '_y' not in df.columns:
-                print("Warning: " + col[:-2] + '_y not found')
+        if col[-2:] == suf_x:
+            if col[:-2] + suf_y not in df.columns:
+                print("Warning: " + col[:-2] + suf_y + ' not found')
             list_columns.append(col[:-2])
     return list_columns
 
