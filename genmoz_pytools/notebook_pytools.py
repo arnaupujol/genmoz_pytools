@@ -509,3 +509,29 @@ def get_He_vs_cat(amplicon_data, label, categories = None, \
     if show_errorbar:
         plot_He_per_cat(He_per_cat, He_per_cat_err)
     return He_per_cat, He_per_cat_err
+
+def sampleID2nida(dataframe):
+    """
+    This method creates a variable with the nida values from
+    the names of the sampleIDs of the data. 
+    
+    Parameters:
+    -----------
+    dataframe: pd.DataFrame
+        Data frame with the sample data
+    
+    Returns:
+    --------
+    dataframe: pd.DataFrame
+        Data frame with the sample data with the new nida variable
+    """
+    dataframe['nida'] = pd.Series([], dtype = float)
+    for i in dataframe.index:
+        if dataframe['sampleID'][i][1:8].isdigit():
+            if dataframe['sampleID'][i][9].isdigit():
+                dataframe['nida'][i] = float(dataframe['sampleID'][i][1:8] + '.' + dataframe['sampleID'][i][9])
+            elif dataframe['sampleID'][i][9] == 'S': 
+                dataframe['nida'][i] = float(dataframe['sampleID'][i][1:8] + '.0')
+            else:
+                print("nida error in index", str(i), dataframe['sampleID'][i][1:8] + '.' + dataframe['sampleID'][i][9])
+    return dataframe
