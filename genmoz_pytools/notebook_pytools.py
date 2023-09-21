@@ -536,7 +536,7 @@ def sampleID2nida(dataframe):
                 print("nida error in index", str(i), dataframe['sampleID'][i][1:8] + '.' + dataframe['sampleID'][i][9])
     return dataframe
 
-def import HF_data(data_path = '/home/apujol/isglobal/projects/genmoz/data/', \
+def import_HF_data(data_path = '/home/apujol/isglobal/projects/genmoz/data/', \
                    filename = 'GEN_MOZ_Health_Facilities.xlsx'):
     """
     This method loads and renames the data of heath facilities. 
