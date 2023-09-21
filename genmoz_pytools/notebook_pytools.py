@@ -535,3 +535,65 @@ def sampleID2nida(dataframe):
             else:
                 print("nida error in index", str(i), dataframe['sampleID'][i][1:8] + '.' + dataframe['sampleID'][i][9])
     return dataframe
+
+def import HF_data(data_path = '/home/apujol/isglobal/projects/genmoz/data/', \
+                   filename = 'GEN_MOZ_Health_Facilities.xlsx'):
+    """
+    This method loads and renames the data of heath facilities. 
+
+    Parameters:
+    -----------
+    data_path: str
+        Directory where the database is located.
+    filename: str
+        Data file name. 
+    
+    Returns:
+    --------
+    hf_data: pd.DataFrame
+        Dataframe of HF data. 
+    """
+    hf_filename = data_path + filename
+    hf_data = pd.read_excel(hf_filename)
+    hf_data = geopandas.GeoDataFrame(hf_data, geometry = geopandas.points_from_xy(hf_data['log'], hf_data['lat']))
+    hf_data = hf_data.set_crs(epsg=4326)
+
+    #Renaming HFs
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Lua Lua'] = 'Lua lua'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Posto Campo'] = 'Posto campo'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'CS\xa0Mopeia Sede'] = 'Mopeia sede'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Guro Chivuli'] = 'C.S. Chivuli'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'C.S. Mabil'] = 'C.S. Mabil'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'C.S. Chichuco'] = 'C.S. Chicuque' #right?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Chemba Catulene'] = 'C.S. Catulene' #right?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Chemba Mulima'] = 'C.S. Mulima' #right?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Chemba Chiramba'] = 'C.S. Chiramba' #right?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Chemba Cado'] = 'C.S. Cado' #right?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Chemba Senhabuzua'] = 'C.S. Senhabuzua' #right?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'CHEMBA Chemba Sede'] = 'C.S. Chemba Sede'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Guro CS Guro Sede'] = 'C.S. Guro' #right?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'C.S. Magude Sede'] = 'CS Magude'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Manhica CS Malavela'] = 'CS Malavela'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Nhlamanculu Chamanculo'] = 'CS Chamanculo' #right?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'BOANE CS Boane'] = 'C.S. Boane' #there are more Boanes
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'BOANE CS Massaca II'] = 'C.S. de Massaca' #right? Or Manaca II?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'KaMavota Romao'] = 'CS Romão' #right?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Nlhamankulo CS Jose Macamo'] = 'CS José Macamo' #right?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Nhlamanculu Xipamanine'] = 'CS Xipamanine' #right?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Gondola H.D de Gondola'] = 'H.D. Gondola'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'KaMaxakeni CS 1 de Maio'] = 'CS 1 de Maio' #right?
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Gondola CS Francismo Manhanga'] = 'F.Manhanga'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Guro CS Guro Sede'] = 'C.S. Guro sede'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'CUAMBA Adine III'] = 'C.S. Adine 3'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Cuamba CS Etatara'] = 'C.S. Cuamba (CB)' #probably not this Cuamba
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'CUAMBA CS Mitucué'] = 'C.S. Mitucue'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Cuamba TITIMANE'] = 'C.S. Titimane'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Cuamba Mepessene'] = 'C.S. Mepessene'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Cuamba Etatara'] = 'C.S. Etatara'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'C.S. Ratorga'] = 'C.S. Ratorga'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Gondola Josina Machel'] = 'C.S. Josina Machel'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'Guro Nhansana'] = 'C.S. Nhansana'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'C.S. Rio das Pedras'] = 'C.S. Rio de Pedras'
+    hf_data['Health facility'].loc[hf_data['Health facility'] == 'KaMavota 1 de Junho'] = 'CS 1 de Junho'
+
+    return hf_data
