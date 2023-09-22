@@ -555,6 +555,20 @@ def import_HF_data(data_path = '/home/apujol/isglobal/projects/genmoz/data/', \
     """
     hf_filename = data_path + filename
     hf_data = pd.read_excel(hf_filename)
+    more_hfs = pd.DataFrame([{'Health facility' : 'Hospital Rural de Montepuez', \
+                          'lat' : -13.12685953300595, \
+                          'log' : 38.998728798450266}, 
+                        {'Health facility' : 'C.S. Moatize', \
+                         'lat' : -16.116172631431265, \
+                         'log' : 33.73330516468423}, 
+                        {'Health facility' : 'Hospital Distrital de Mopeia', \
+                         'lat' : -17.979028394144233, \
+                         'log' : 35.71294783114801}, 
+                        {'Health facility' : 'Hospital Distrital de Massinga', \
+                         'lat' : -23.334036406314528, \
+                         'log' : 35.3804246540243}, 
+                        ])
+    hf_data = pd.concat([hf_data, more_hfs])
     hf_data = geopandas.GeoDataFrame(hf_data, geometry = geopandas.points_from_xy(hf_data['log'], hf_data['lat']))
     hf_data = hf_data.set_crs(epsg=4326)
 
