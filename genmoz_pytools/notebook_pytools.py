@@ -567,6 +567,9 @@ def import_HF_data(data_path = '/home/apujol/isglobal/projects/genmoz/data/', \
                         {'Health facility' : 'Hospital Distrital de Massinga', \
                          'lat' : -23.334036406314528, \
                          'log' : 35.3804246540243}, 
+                         {'Health facility' : 'CS Manhiça', \
+                         'lat' : -25.40946514320634, \
+                         'log' : 32.807781164472836}, 
                         ])
     hf_data = pd.concat([hf_data, more_hfs])
     hf_data = geopandas.GeoDataFrame(hf_data, geometry = geopandas.points_from_xy(hf_data['log'], hf_data['lat']))
