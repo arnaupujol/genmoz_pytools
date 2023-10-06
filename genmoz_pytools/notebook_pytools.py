@@ -564,6 +564,9 @@ def import_HF_data(data_path = '/home/apujol/isglobal/projects/genmoz/data/', \
                         {'Health facility' : 'Hospital Distrital de Mopeia', \
                          'lat' : -17.979028394144233, \
                          'log' : 35.71294783114801}, 
+                        {'Health facility' : 'Hospital Distrital de Dondo', \
+                         'lat' : -19.618425045677125, \
+                         'log' : 34.7413258314432}, 
                         {'Health facility' : 'Hospital Distrital de Massinga', \
                          'lat' : -23.334036406314528, \
                          'log' : 35.3804246540243}, 
