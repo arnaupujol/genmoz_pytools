@@ -120,7 +120,7 @@ def import_HFS22_data(data_path = "/home/apujol/isglobal/projects/genmoz/data/HF
         hfs_run_data: pd.DataFrame
             Data of the NextSeq results
     """
-    hfs_excel_filename = data_path + 'HFS_ANO1.xlsx'
+    hfs_excel_filename = data_path + 'HFS1_FINAL_07_11_2023.xlsx'
     if diversity_filtered:
         hfs_run_filename = data_path + 'HFS22_NextSeq_allele_data_filtered_div.csv'
     else: 
@@ -527,13 +527,13 @@ def sampleID2nida(dataframe):
     """
     dataframe['nida'] = pd.Series([], dtype = float)
     for i in dataframe.index:
-        if dataframe['sampleID'][i][1:8].isdigit():
-            if dataframe['sampleID'][i][9].isdigit():
-                dataframe['nida'][i] = float(dataframe['sampleID'][i][1:8] + '.' + dataframe['sampleID'][i][9])
-            elif dataframe['sampleID'][i][9] == 'S': 
-                dataframe['nida'][i] = float(dataframe['sampleID'][i][1:8] + '.0')
+        if dataframe.loc[i, 'sampleID'][1:8].isdigit():
+            if dataframe.loc[i, 'sampleID'][9].isdigit():
+                dataframe.loc[i, 'nida'] = float(dataframe.loc[i, 'sampleID'][1:8] + '.' + dataframe.loc[i, 'sampleID'][9])
+            elif dataframe.loc[i, 'sampleID'][9] == 'S': 
+                dataframe.loc[i, 'nida'] = float(dataframe.loc[i, 'sampleID'][1:8] + '.0')
             else:
-                print("nida error in index", str(i), dataframe['sampleID'][i][1:8] + '.' + dataframe['sampleID'][i][9])
+                print("nida error in index", str(i), dataframe.loc[i, 'sampleID'][1:8] + '.' + dataframe.loc[i, 'sampleID'][9])
     return dataframe
 
 def import_HF_data(data_path = '/home/apujol/isglobal/projects/genmoz/data/', \
@@ -597,3 +597,46 @@ def import_HF_data(data_path = '/home/apujol/isglobal/projects/genmoz/data/', \
     hf_data['Health facility'].loc[hf_data['Health facility'] == 'KaMavota 1 de Junho'] = 'CS 1 de Junho'
 
     return hf_data
+
+def get_travel_days_728(dataframe, notification_date = '3.2 Data da Notificação.', \
+                       travel_in_date = 'Data de Ida.', travel_end_date = 'Data de regresso'):
+    """
+    This method calculates the number of days of travel within the last 7-28 days from the 
+    notification date. 
+    
+    Parameters: 
+    -----------
+    dataframe: pd.DataFrame
+        Dataframe containing the dates. 
+    notification_date: str
+        Name of the variable of the notification date. 
+    travel_in_date: str
+        Name of the variable of the initial travel date. 
+    travel_end_date: str
+        Name of the variable of the travel end date. 
+    
+    Returns:
+    --------
+    dataframe: pd.DataFrame
+        Dataframe containing the dates and the new dates. 
+    """
+    #Delete travel dates if return dates keeps after the new notification date
+    mask_dates = dataframe[notification_date] < dataframe[travel_end_date]
+    dataframe.loc[mask_dates, travel_end_date] = np.nan
+    dataframe.loc[mask_dates, travel_in_date] = np.nan
+    
+    #define date 7 days before notification
+    dataframe['7days_before'] = dataframe[notification_date] - pd.to_timedelta(7, unit='D')
+    
+    #define date 28 days before notification
+    dataframe['28days_before'] = dataframe[notification_date] - pd.to_timedelta(28, unit='D')
+    
+    #define first travel day within the last 7-28 days
+    dataframe['travel_in_date_728'] = dataframe[[travel_in_date, '28days_before']].max(axis = 1, skipna = False)
+    dataframe['travel_in_date_728'] = dataframe[['travel_in_date_728', '7days_before']].min(axis = 1, skipna = False)
+    #define the last travel day within the last 7-28 days
+    dataframe['travel_end_date_728'] = dataframe[[travel_end_date, '28days_before']].max(axis = 1, skipna = False)
+    dataframe['travel_end_date_728'] = dataframe[['travel_end_date_728', '7days_before']].min(axis = 1, skipna = False)
+    #Calculate number of travel dates within the last 7-28 days
+    dataframe['travel_days_728'] = (dataframe['travel_end_date_728'] - dataframe['travel_in_date_728']).dt.days
+    return dataframe
