@@ -10,10 +10,8 @@ Software requirements:
 ----------------------
 All the packages that are required so that all the codes can run are:
 - numpy
-#- scipy
 - pandas
-#- matplotlib
-#- contextily
+- matplotlib
 - geopandas
 
 Installation:
@@ -30,4 +28,5 @@ installed if needed.
 
 Structure of the repository:
 ----------------------------
-TO BE WRITTEN
+
+The directory genmoz_pytools contains the python file notebook_tools.py. This file contains useful functions for data analysis in the context of the GenMoz project.  
